@@ -50,7 +50,7 @@
                     <label for="proveedor-direccion" class="form-label">Dirección</label>
                     <input type="text" class="form-control" id="proveedor-direccion" name="proveedor-direccion" required>
                 </div>
-                <button type="submit" class="btn btn-primary">Guardar</button>
+                <button type="submit" class="btn btn-primary" onclick="event.preventDefault(); saveProveedor();">Guardar</button>
                 <button type="button" class="btn btn-danger" onclick="deleteProveedor()">Eliminar</button>
             </form>
         </div>
@@ -60,18 +60,11 @@
     crossorigin="anonymous"></script>
     <script src="js/request.js"></script>
     <script src="js/proveedores.js"></script>
-    <script src="js/script.js"></script>
     <script>
         window.onload = function(){
             const urlParams = new URLSearchParams(window.location.search);
             if (urlParams.get('idproveedor') != null) {
                 loadProveedor(urlParams.get('idproveedor'));
-            }
-            
-            // Verificar token al cargar la página
-            if (!localStorage.getItem('accessToken')) {
-                alert('Debes iniciar sesión primero');
-                window.location.href = 'index.html';
             }
         }
     </script>

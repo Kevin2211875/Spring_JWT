@@ -29,44 +29,9 @@ const clearTokens = () => {
 
 const getAccessToken = () => {
     return localStorage.getItem('accessToken');
-    
 };
 
-// 2. FUNCIÓN PARA OBTENER INFO DEL USUARIO
-const fetchUserInfo = async () => {
-    const token = getAccessToken();
-    if (!token) return false;
 
-    try {
-        const response = await fetch(`${API_BASE_URL}/auth/me`, {
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Accept': 'application/json'
-            }
-        });
-
-        if (!response.ok) {
-            throw new Error('Failed to fetch user info');
-        }
-
-        const user = await response.json();
-        
-        if (user) {
-            document.getElementById('userName').textContent = user.name;
-            document.getElementById('userEmail').textContent = user.email;
-            document.getElementById('userInfo').style.display = 'block';
-            document.getElementById('loginForm').style.display = 'none';
-            return true;
-        }
-    } catch (error) {
-        console.error('Error:', error);
-        showMessage('Error al cargar información del usuario', false);
-        clearTokens();
-        document.getElementById('loginForm').style.display = 'block';
-        document.getElementById('userInfo').style.display = 'none';
-    }
-    return false;
-};
 
 // 3. MANEJADOR DE LOGIN
 if (document.getElementById('loginForm')) {
@@ -88,11 +53,10 @@ if (document.getElementById('loginForm')) {
             const data = await response.json();
 
             if (response.ok) {
-                storeTokens(data);
-                showMessage('Login exitoso!', true);
-                await fetchUserInfo();
-                window.location.href = "login.html";
+                const token = data.access_token;
                 localStorage.setItem('accessToken', token);
+                showMessage('Login exitoso!', true);    
+                window.location.href = "login.html";
             } else {
                 showMessage(data.message || 'Error en login', false);
             }
@@ -140,104 +104,4 @@ if (document.getElementById('registerForm')) {
             showMessage('Error de conexión: ' + error.message, false);
         }
     });
-}
-
-// 5. INICIALIZACIÓN
-document.addEventListener('DOMContentLoaded', () => {
-    if (getAccessToken()) {
-        fetchUserInfo();
-    }
-});
-
-// 6. MANEJADOR DE FORMULARIO DE PROVEEDORES
-if (document.getElementById('form-proveedor')) {
-    document.getElementById('form-proveedor').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        const token = getAccessToken();
-        if (!token) {
-            showMessage('Debes iniciar sesión primero', false);
-            window.location.href = 'index.html';
-            return;
-        }
-
-        const proveedor = {
-            id: document.getElementById('proveedor-id').value || null,
-            nit: document.getElementById('proveedor-nit').value,
-            nombre: document.getElementById('proveedor-nombre').value,
-            ciudad: document.getElementById('proveedor-ciudad').value,
-            telefono: document.getElementById('proveedor-telefono').value,
-            direccion: document.getElementById('proveedor-direccion').value
-        };
-
-        try {
-            const method = proveedor.id ? 'PUT' : 'POST';
-            const url = proveedor.id ? 
-                `${API_BASE_URL}/proveedores/${proveedor.id}` : 
-                `${API_BASE_URL}/proveedores`;
-
-            const response = await fetch(url, {
-                method: method,
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify(proveedor)
-            });
-
-            const data = await response.json();
-
-            if (response.ok) {
-                showMessage('Proveedor guardado correctamente', true);
-                setTimeout(() => {
-                    window.location.href = 'login.html'; // Redirige a la tabla de proveedores
-                }, 1500);
-            } else {
-                throw new Error(data.message || 'Error al guardar el proveedor');
-            }
-        } catch (error) {
-            showMessage('Error: ' + error.message, false);
-        }
-    });
-}
-
-// 7. FUNCIÓN PARA ELIMINAR PROVEEDOR (global para que funcione el onclick)
-window.deleteProveedor = async function() {
-    const token = getAccessToken();
-    if (!token) {
-        showMessage('Debes iniciar sesión primero', false);
-        window.location.href = 'index.html';
-        return;
-    }
-
-    const proveedorId = document.getElementById('proveedor-id').value;
-    if (!proveedorId) {
-        showMessage('No hay proveedor seleccionado para eliminar', false);
-        return;
-    }
-
-    if (!confirm('¿Estás seguro de que quieres eliminar este proveedor?')) {
-        return;
-    }
-
-    try {
-        const response = await fetch(`${API_BASE_URL}/proveedores/${proveedorId}`, {
-            method: 'DELETE',
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        });
-
-        if (response.ok) {
-            showMessage('Proveedor eliminado correctamente', true);
-            setTimeout(() => {
-                window.location.href = 'login.html'; // Redirige a la tabla de proveedores
-            }, 1500);
-        } else {
-            const data = await response.json();
-            throw new Error(data.message || 'Error al eliminar el proveedor');
-        }
-    } catch (error) {
-        showMessage('Error: ' + error.message, false);
-    }
 }

@@ -1,4 +1,7 @@
 // js/proveedores.js
+console.log("Página cargada, token disponible:", localStorage.getItem('accessToken'));
+
+
 function renderProveedores(proveedores) {
     const tableBody = document.getElementById('proveedor-table');
     tableBody.innerHTML = ''; // Limpia la tabla
@@ -17,21 +20,28 @@ function renderProveedores(proveedores) {
     });
 }
 
+const token = localStorage.getItem('accessToken');
+
 async function loadData() {
-    const token = localStorage.getItem('accessToken');
 
     try {
+        console.log("Antes del fetch, token:", localStorage.getItem('accessToken'));
+        window.addEventListener('beforeunload', () => {
+            console.log("¡La página se está recargando o cerrando!");
+        });
+        
         const response = await fetch('http://localhost:8080/proveedores', {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
-            },
-            credentials: 'include' // Importante para manejar cookies de sesión
+            }
         });
-
-        console.log('Status:', response.status);
+        window.addEventListener('beforeunload', () => {
+            console.log("¡La página se está recargando o cerrando!");
+        });
         
+
 
         if (!response.ok) {
             throw new Error(`Error HTTP: ${response.status}`);
@@ -45,18 +55,12 @@ async function loadData() {
     }
 }
 
-document.getElementById('form-proveedor').addEventListener('submit', function(e) {
-    e.preventDefault(); // Previene el envío tradicional del formulario
-    saveProveedor();
-});
-
 function saveProveedor() {
     const token = localStorage.getItem('accessToken');
     if (!token) {
         alert('No estás autenticado.');
         return;
     }
-    
 
     const proveedor = {
         nit: document.getElementById('proveedor-nit').value,
@@ -67,8 +71,10 @@ function saveProveedor() {
     };
 
     const proveedorId = document.getElementById('proveedor-id').value;
-    const method = proveedorId ? 'PUT' : 'POST';
-    const url = proveedorId ? `${API_BASE_URL}/proveedores/${proveedorId}` : `${API_BASE_URL}/proveedores`;
+    const method = proveedorId && proveedorId !== "" ? 'PUT' : 'POST';
+    const url = method === 'PUT'
+        ? `${API_BASE_URL}/proveedores/${proveedorId}`
+        : `${API_BASE_URL}/proveedores/crearProveedores`;
 
     fetch(url, {
         method: method,
@@ -81,7 +87,7 @@ function saveProveedor() {
     .then(response => {
         if (response.ok) {
             alert('Proveedor guardado correctamente');
-            window.location.href = 'list_proveedores.html'; // o a donde quieras redirigir
+            window.location.href = 'login.html';
         } else {
             return response.json().then(error => { throw new Error(error.message); });
         }
@@ -90,6 +96,7 @@ function saveProveedor() {
         alert('Error: ' + error.message);
     });
 }
+
 
 function deleteProveedor() {
     const token = localStorage.getItem('accessToken');
